@@ -2,7 +2,6 @@ from phi.agent import Agent
 from phi.model.groq import Groq
 import os
 from phi.tools.python import PythonTools
-from phi.assistant.assistant import Assistant
 from config.business_context import business_context
 from dotenv import load_dotenv
 
@@ -10,53 +9,64 @@ load_dotenv()
 
 class WalmartAnalyst:
     def __init__(self):
-        self.llm = Groq(
-            model="deepseek-r1-distill-llama-70b",
-            api_key=os.getenv("GROQ_API_KEY")
-        )
-        
-        self.assistant = Assistant(
-            llm=self.llm,
+        self.agent = Agent(
+            name="Walmart Data Agent",
+            role="Automated Retail Analyst",
+            model=Groq(
+                id="deepseek-r1-distill-llama-70b",
+                api_key=os.getenv("GROQ_API_KEY")
+            ),
             tools=[PythonTools()],
+            instructions=[
+                "Prioritize practical over theoretical insights",
+                "Always tie recommendations to the 4 business priorities",
+                "Use Walmart-specific terms: EDLP, Cross-docking, etc."
+            ],
             additional_authorized_imports=[
                 "pandas", "numpy", "matplotlib.pyplot", 
                 "seaborn", "sklearn.ensemble", "plotly"
             ],
-            save_to="./analysis_output/",
-            read_files=["data/Walmart.csv.xls"],
-            description="Senior Retail Data Analyst at Walmart"
+            show_tool_calls=True,
+            markdown=True
         )
     
-    def analyze_sales_data(self):
+    
+    def analyze_sales_data(self, data_path):
         analysis_prompt = f"""\
-        **Role**: Senior Retail Data Analyst at Walmart.  
-        **Goal**: Perform EDA, generate insights, and provide actionable recommendations.  
+        **Role**: Senior Retail Data Analyst at Walmart  
+        **Dataset**: {data_path}  
+        **Columns**: {['Store', 'Date', 'Weekly_Sales', 'Holiday_Flag', 'Temperature', 'Fuel_Price', 'CPI', 'Unemployment']}  
 
-        ## Phase 1: Autonomous EDA
-        - Load 'data/Walmart.csv.xls' and conduct initial checks.  
-        - Identify critical data quality issues (missingness, anomalies, imbalance).  
-        - Generate 2-3 plots to visualize key distributions/relationships.  
+        === ANALYSIS PHASES ===
+        [1] Data Quality & Visualization:
+        - Check missing values, anomalies, data types
+        - Create 3 plots showing key relationships
+        - Save plots to './analysis_output/plots/' with descriptive names
 
-        ## Phase 2: Insight Generation
-        - Find 3 correlations/trends impacting business priorities (see context below).  
-        - Highlight 1 underperforming store/department needing intervention.  
-
-        ## Phase 3: Business Recommendations
-        - Propose 2 short-term tactical actions (next quarter).  
-        - Suggest 1 long-term strategic initiative (6-12 months).  
+        [2] Business Insights(based on data insights and business context):
+        - Calculate correlations between Weekly_Sales and 3 other metrics
+        - Identify top underperforming store using quantiles
+        - Highlight one operational efficiency opportunity
 
         **Business Context**: {business_context}  
 
-        **Rules**:  
-        - Save plots to './figures/' with clear filenames (e.g., "sales_vs_fuel.png")  
-        - No markdown in final answer  
-        - Use pandas/seaborn for analysis  
+        [3] Action Plan:
+        - 2 immediate actions (next 90 days)
+        - 1 strategic initiative (6-12 months)
+        - Map each recommendation to specific business priorities
+
+        **RULES**
+        - Convert the results to str() and store to './analysis_output/results.txt' 
+        - Make sure the result is well-formatted for easy readability 
+        - Show actual numbers from analysis
+        - Sort recommendations by potential impact
         """
         
         os.makedirs("./analysis_output/plots/", exist_ok=True)
-        return self.assistant.run(analysis_prompt)
+        return self.agent.run(analysis_prompt)
+
 
 if __name__ == "__main__":
     analyst = WalmartAnalyst()
     results = analyst.analyze_sales_data()
-    print("Analysis Results:\n", results)
+    print("Analysis Completed")
