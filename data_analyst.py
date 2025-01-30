@@ -20,7 +20,9 @@ class WalmartAnalyst:
             instructions=[
                 "Prioritize practical over theoretical insights",
                 "Always tie recommendations to the 4 business priorities",
-                "Use Walmart-specific terms: EDLP, Cross-docking, etc."
+                "Use Walmart-specific terms: EDLP, Cross-docking, etc.",
+                "Format numbers with dollar signs and percentages",
+                "Use clear section headers"
             ],
             additional_authorized_imports=[
                 "pandas", "numpy", "matplotlib.pyplot", 
@@ -68,5 +70,5 @@ class WalmartAnalyst:
 
 if __name__ == "__main__":
     analyst = WalmartAnalyst()
-    results = analyst.analyze_sales_data()
+    results = analyst.analyze_sales_data("./data/Walmart.csv")
     print("Analysis Completed")
